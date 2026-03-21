@@ -1503,7 +1503,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 [[package]]
 name = "vm-attest"
 version = "0.1.0"
-source = "git+https://github.com/oxidecomputer/vm-attest#1fba555e4a5a3acbf58b072f6263b5ceff7fd205"
+source = "git+https://github.com/oxidecomputer/vm-attest?rev=f2184012395b329b09395d1a63a1961a267d1166#f2184012395b329b09395d1a63a1961a267d1166"
 dependencies = [
  "anyhow",
  "attest-data",
@@ -1522,7 +1522,6 @@ dependencies = [
  "sha2",
  "thiserror 2.0.18",
  "uuid",
- "vsock",
  "x509-cert",
 ]
 
@@ -1543,6 +1542,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "thiserror 2.0.18",
  "vm-attest",
  "vsock",
  "x509-cert",

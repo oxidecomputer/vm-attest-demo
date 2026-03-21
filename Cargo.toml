@@ -17,6 +17,7 @@ log = "0.4.29"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 sha2 = "0.10.9"
-vm-attest.git = "https://github.com/oxidecomputer/vm-attest"
+thiserror = "2.0.18"
+vm-attest = { git = "https://github.com/oxidecomputer/vm-attest", rev = "f2184012395b329b09395d1a63a1961a267d1166" }
 vsock = "0.5.3"
 x509-cert = "0.2.5"

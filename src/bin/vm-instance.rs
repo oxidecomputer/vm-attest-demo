@@ -11,10 +11,7 @@ use std::{net::TcpListener, os::unix::net::UnixStream, path::PathBuf, thread, ti
 
 use vsock::{VMADDR_CID_HOST, VsockAddr, VsockStream};
 
-use vm_attest::{
-    socket::{VmInstanceRotSocketClient, VmInstanceTcpServer},
-    vsock::VmInstanceRotVsockClient,
-};
+use vm_attest_demo::{VmInstanceRotSocketClient, VmInstanceRotVsockClient, VmInstanceTcpServer};
 
 #[derive(Debug, Subcommand)]
 enum SocketType {

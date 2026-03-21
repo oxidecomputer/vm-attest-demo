@@ -4,8 +4,9 @@
 
 mod socket;
 pub use socket::{
-    VmInstanceAttestDataResponse, VmInstanceRotSocketClient, VmInstanceRotSocketClientError,
-    VmInstanceRotSocketRunError, VmInstanceRotSocketServer, VmInstanceTcp, VmInstanceTcpServer,
+    VmInstanceAttestDataResponse, VmInstanceRotSocketClient,
+    VmInstanceRotSocketClientError, VmInstanceRotSocketRunError,
+    VmInstanceRotSocketServer, VmInstanceTcp, VmInstanceTcpServer,
     VmInstanceTcpServerError,
 };
 

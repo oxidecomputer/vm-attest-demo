@@ -7,11 +7,15 @@ use clap::{Parser, Subcommand};
 use clap_verbosity::{InfoLevel, Verbosity};
 
 use log::{debug, info};
-use std::{net::TcpListener, os::unix::net::UnixStream, path::PathBuf, thread, time};
+use std::{
+    net::TcpListener, os::unix::net::UnixStream, path::PathBuf, thread, time,
+};
 
 use vsock::{VMADDR_CID_HOST, VsockAddr, VsockStream};
 
-use vm_attest_demo::{VmInstanceRotSocketClient, VmInstanceRotVsockClient, VmInstanceTcpServer};
+use vm_attest_demo::{
+    VmInstanceRotSocketClient, VmInstanceRotVsockClient, VmInstanceTcpServer,
+};
 
 #[derive(Debug, Subcommand)]
 enum SocketType {
@@ -63,15 +67,17 @@ fn main() -> Result<()> {
                 return Err(anyhow!("socket file missing"));
             }
 
-            let stream = UnixStream::connect(&sock).context("connect to domain socket")?;
+            let stream = UnixStream::connect(&sock)
+                .context("connect to domain socket")?;
             debug!("connected to VmInstanceRotServer socket");
             let vm_instance_rot = VmInstanceRotSocketClient::new(stream);
 
-            let challenge_listener =
-                TcpListener::bind(&args.address).context("bind to TCP socket")?;
+            let challenge_listener = TcpListener::bind(&args.address)
+                .context("bind to TCP socket")?;
             debug!("Listening on TCP address{:?}", &args.address);
 
-            let server = VmInstanceTcpServer::new(challenge_listener, vm_instance_rot);
+            let server =
+                VmInstanceTcpServer::new(challenge_listener, vm_instance_rot);
             Ok(server.run()?)
         }
         SocketType::Vsock { port } => {
@@ -80,7 +86,8 @@ fn main() -> Result<()> {
 
             // if `--retry` we repeatedly try to connect to the host vsock
             let stream = loop {
-                let stream = VsockStream::connect(&addr).context("vsock stream connect");
+                let stream =
+                    VsockStream::connect(&addr).context("vsock stream connect");
                 match stream {
                     Ok(stream) => break stream,
                     // make this more specific by detecting whatever this is:
@@ -101,11 +108,12 @@ fn main() -> Result<()> {
             let vm_instance_rot = VmInstanceRotVsockClient::new(stream);
 
             debug!("binding to address: {}", &args.address);
-            let challenge_listener =
-                TcpListener::bind(&args.address).context("bind to TCP socket")?;
+            let challenge_listener = TcpListener::bind(&args.address)
+                .context("bind to TCP socket")?;
             debug!("Listening on TCP address{:?}", &args.address);
 
-            let server = VmInstanceTcpServer::new(challenge_listener, vm_instance_rot);
+            let server =
+                VmInstanceTcpServer::new(challenge_listener, vm_instance_rot);
             Ok(server.run()?)
         }
     }

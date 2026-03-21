@@ -11,8 +11,8 @@ use std::{
 use vsock::{VsockListener, VsockStream};
 
 use vm_attest::{
-    QualifyingData, Request, Response, VmInstanceAttestation, VmInstanceAttester, VmInstanceRot,
-    VmInstanceRotError,
+    QualifyingData, Request, Response, VmInstanceAttestation,
+    VmInstanceAttester, VmInstanceRot, VmInstanceRotError,
 };
 
 /// the maximum length of a message that we'll accept from clients
@@ -72,16 +72,21 @@ impl VmInstanceRotVsockServer {
                         "Error: Line length exceeded the limit of {} bytes.",
                         MAX_LINE_LENGTH
                     );
-                    let response = Response::Error("Request too long".to_string());
+                    let response =
+                        Response::Error("Request too long".to_string());
                     let mut response = serde_json::to_string(&response)?;
                     response.push('\n');
                     debug!("sending error response: {response}");
-                    reader.get_mut().get_mut().write_all(response.as_bytes())?;
+                    reader
+                        .get_mut()
+                        .get_mut()
+                        .write_all(response.as_bytes())?;
                     break;
                 }
 
                 debug!("string received: {msg}");
-                let result: Result<Request, serde_json::Error> = serde_json::from_str(&msg);
+                let result: Result<Request, serde_json::Error> =
+                    serde_json::from_str(&msg);
                 let request = match result {
                     Ok(r) => r,
                     Err(e) => {
@@ -90,7 +95,10 @@ impl VmInstanceRotVsockServer {
                         let mut response = serde_json::to_string(&response)?;
                         response.push('\n');
                         debug!("sending error response: {response}");
-                        reader.get_mut().get_mut().write_all(response.as_bytes())?;
+                        reader
+                            .get_mut()
+                            .get_mut()
+                            .write_all(response.as_bytes())?;
                         return Err(VmInstanceRotVsockError::Request(e));
                     }
                 };

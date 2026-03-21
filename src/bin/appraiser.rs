@@ -5,14 +5,19 @@
 use anyhow::{Context, Result, anyhow};
 use clap::{Parser, Subcommand};
 use clap_verbosity::{InfoLevel, Verbosity};
-use dice_verifier::{Attestation, Corim, Log, MeasurementSet, Nonce, ReferenceMeasurements};
+use dice_verifier::{
+    Attestation, Corim, Log, MeasurementSet, Nonce, ReferenceMeasurements,
+};
 use log::{debug, info};
 use sha2::{Digest, Sha256};
 use std::{fs, net::TcpStream, os::unix::net::UnixStream, path::PathBuf};
 use vm_attest::{
-    QualifyingData, RotType, VmInstanceAttestation, VmInstanceAttester, VmInstanceConf,
+    QualifyingData, RotType, VmInstanceAttestation, VmInstanceAttester,
+    VmInstanceConf,
 };
-use vm_attest_demo::{VmInstanceRotSocketClient, VmInstanceRotVsockClient, VmInstanceTcp};
+use vm_attest_demo::{
+    VmInstanceRotSocketClient, VmInstanceRotVsockClient, VmInstanceTcp,
+};
 use vsock::{VMADDR_CID_HOST, VsockAddr, VsockStream};
 use x509_cert::{
     Certificate,
@@ -103,11 +108,13 @@ fn appraise_platform_attestation(
 ) -> Result<()> {
     let mut cert_chain_pem = Vec::new();
     for cert in &attestation.cert_chain {
-        cert_chain_pem.push(Certificate::from_der(cert).context("certificate from DER")?);
+        cert_chain_pem
+            .push(Certificate::from_der(cert).context("certificate from DER")?);
     }
     let cert_chain_pem = cert_chain_pem;
-    let verified_root = dice_verifier::verify_cert_chain(&cert_chain_pem, root_certs)
-        .context("verify cert chain")?;
+    let verified_root =
+        dice_verifier::verify_cert_chain(&cert_chain_pem, root_certs)
+            .context("verify cert chain")?;
     let cn = get_cert_cn(verified_root);
     let cn = cn.ok_or(anyhow!("No CN in cert chain root"))?;
     info!("cert chain verified against root with CN: {cn}");
@@ -131,7 +138,8 @@ fn appraise_platform_attestation(
 
     // smuggle this data into the `verify_attestation` function in the
     // `attest_data::Nonce` type
-    let qualifying_data = Nonce::N32(attest_data::Array(qdata.finalize().into()));
+    let qualifying_data =
+        Nonce::N32(attest_data::Array(qdata.finalize().into()));
 
     // get the log from the Oxide platform RoT
     let oxlog = attestation
@@ -141,15 +149,22 @@ fn appraise_platform_attestation(
 
     // put log in the form expected by the `verify_attestation` function
     let (log, _): (Log, _) = if let Some(oxlog) = oxlog {
-        hubpack::deserialize(&oxlog.data).context("hubpack deserialize platform RoT log")?
+        hubpack::deserialize(&oxlog.data)
+            .context("hubpack deserialize platform RoT log")?
     } else {
         return Err(anyhow!("no measurement log for Oxide Platform RoT"));
     };
 
-    let (ox_attest, _): (Attestation, _) = hubpack::deserialize(&attestation.attestation)?;
+    let (ox_attest, _): (Attestation, _) =
+        hubpack::deserialize(&attestation.attestation)?;
 
-    dice_verifier::verify_attestation(&cert_chain_pem[0], &ox_attest, &log, &qualifying_data)
-        .context("verify attestation")?;
+    dice_verifier::verify_attestation(
+        &cert_chain_pem[0],
+        &ox_attest,
+        &log,
+        &qualifying_data,
+    )
+    .context("verify attestation")?;
 
     info!("attestation verified");
 
@@ -160,8 +175,9 @@ fn appraise_platform_attestation(
                 // use dice-verifier crate to use the RIMs to appraise the
                 // log from the OxidePlatform RoT
                 let (log, _): (Log, _) = hubpack::deserialize(&log.data)?;
-                let measurements = MeasurementSet::from_artifacts(&cert_chain_pem, &log)
-                    .context("measurement set from artifacts")?;
+                let measurements =
+                    MeasurementSet::from_artifacts(&cert_chain_pem, &log)
+                        .context("measurement set from artifacts")?;
 
                 dice_verifier::verify_measurements(&measurements, rims)?;
                 info!("measurement log from Oxide Platform RoT appraised");
@@ -169,14 +185,20 @@ fn appraise_platform_attestation(
             RotType::OxideInstance => {
                 // compare log / config description from the OxideInstance
                 // RoT to the reference from the config reference
-                let instance_cfg = str::from_utf8(&log.data).context("string from UTF8")?;
+                let instance_cfg =
+                    str::from_utf8(&log.data).context("string from UTF8")?;
                 let instance_cfg: VmInstanceConf =
-                    serde_json::from_str(instance_cfg).context("VmInstanceConf from JSON")?;
+                    serde_json::from_str(instance_cfg)
+                        .context("VmInstanceConf from JSON")?;
 
                 info!("comparing reference vm instance cfg: {instance_rim:?}");
-                info!("to vm instance cfg from VmInstanceRot: {instance_cfg:?}");
+                info!(
+                    "to vm instance cfg from VmInstanceRot: {instance_cfg:?}"
+                );
                 if *instance_rim != instance_cfg {
-                    return Err(anyhow!("Vm Instance Conf verification failed"));
+                    return Err(anyhow!(
+                        "Vm Instance Conf verification failed"
+                    ));
                 }
                 info!("metadata from Oxide VM Instance RoT appraised");
             }
@@ -196,8 +218,9 @@ fn main() -> Result<()> {
     // load reference integrity measurements from CORIMs
     let mut corims = Vec::new();
     for corim in &args.reference_measurements {
-        let corim = Corim::from_file(corim)
-            .with_context(|| format!("loading CORIM from: {}", corim.display()))?;
+        let corim = Corim::from_file(corim).with_context(|| {
+            format!("loading CORIM from: {}", corim.display())
+        })?;
         corims.push(corim);
     }
     let platform_rim = ReferenceMeasurements::try_from(corims.as_slice())
@@ -207,8 +230,8 @@ fn main() -> Result<()> {
     // load the provided root certs
     let root_certs = match args.root_cert {
         Some(path) => {
-            let root_cert =
-                fs::read(&path).with_context(|| format!("read file: {}", path.display()))?;
+            let root_cert = fs::read(&path)
+                .with_context(|| format!("read file: {}", path.display()))?;
             Some(
                 Certificate::load_pem_chain(&root_cert)
                     .context("failed to load certs from the provided file")?,
@@ -216,7 +239,9 @@ fn main() -> Result<()> {
         }
         None => {
             if !args.self_signed {
-                return Err(anyhow!("No root cert, `--self-signed` must be explicit"));
+                return Err(anyhow!(
+                    "No root cert, `--self-signed` must be explicit"
+                ));
             } else {
                 None
             }
@@ -227,10 +252,10 @@ fn main() -> Result<()> {
     // construct a `VmInstanceConf` from test data
     // this is our reference for appraising the log produced by the
     // `RotType::OxideInstance`
-    let instance_rim =
-        fs::read_to_string(&args.vm_instance_cfg).context("read ATTEST_INSTANCE_LOG to string")?;
-    let instance_rim: VmInstanceConf =
-        serde_json::from_str(&instance_rim).context("parse JSON from rim for instance RoT log")?;
+    let instance_rim = fs::read_to_string(&args.vm_instance_cfg)
+        .context("read ATTEST_INSTANCE_LOG to string")?;
+    let instance_rim: VmInstanceConf = serde_json::from_str(&instance_rim)
+        .context("parse JSON from rim for instance RoT log")?;
 
     match args.backend {
         // Using these backends we're talking directly to the `VmInstanceRot`
@@ -239,14 +264,17 @@ fn main() -> Result<()> {
         // verifying attestations from this backend there's no log from the
         // `VmInstance` to appraise.
         Backend::VmInstanceRot { socket_type } => {
-            let qualifying_data =
-                QualifyingData::from_platform_rng().context("qualifying data from platform RNG")?;
+            let qualifying_data = QualifyingData::from_platform_rng()
+                .context("qualifying data from platform RNG")?;
             match socket_type {
                 SocketType::Unix { sock } => {
-                    let stream = UnixStream::connect(&sock).context("connect to domain socket")?;
+                    let stream = UnixStream::connect(&sock)
+                        .context("connect to domain socket")?;
                     debug!("connected to VmInstanceRotServer socket");
-                    let vm_instance_rot = VmInstanceRotSocketClient::new(stream);
-                    let attestation = vm_instance_rot.attest(&qualifying_data)?;
+                    let vm_instance_rot =
+                        VmInstanceRotSocketClient::new(stream);
+                    let attestation =
+                        vm_instance_rot.attest(&qualifying_data)?;
                     appraise_platform_attestation(
                         &attestation,
                         &qualifying_data,
@@ -255,13 +283,17 @@ fn main() -> Result<()> {
                         &instance_rim,
                     )
                     .context("appraise platform attestation")?;
-                    info!("appraised attestation from VmInstanceRot over socket");
+                    info!(
+                        "appraised attestation from VmInstanceRot over socket"
+                    );
                 }
                 SocketType::Vsock { port } => {
                     let addr = VsockAddr::new(VMADDR_CID_HOST, port);
-                    let stream = VsockStream::connect(&addr).context("vsock stream connect")?;
+                    let stream = VsockStream::connect(&addr)
+                        .context("vsock stream connect")?;
                     let vm_instance_rot = VmInstanceRotVsockClient::new(stream);
-                    let attestation = vm_instance_rot.attest(&qualifying_data)?;
+                    let attestation =
+                        vm_instance_rot.attest(&qualifying_data)?;
                     appraise_platform_attestation(
                         &attestation,
                         &qualifying_data,
@@ -270,7 +302,9 @@ fn main() -> Result<()> {
                         &instance_rim,
                     )
                     .context("appraise platform attestation")?;
-                    info!("appraised attestation from VmInstanceRot over vsock");
+                    info!(
+                        "appraised attestation from VmInstanceRot over vsock"
+                    );
                 }
             };
         }
@@ -295,8 +329,9 @@ fn main() -> Result<()> {
             let mut qualifying_data = Sha256::new();
             qualifying_data.update(nonce);
             qualifying_data.update(&attested_data.data);
-            let vm_qualifying_data =
-                QualifyingData::from(Into::<[u8; 32]>::into(qualifying_data.finalize()));
+            let vm_qualifying_data = QualifyingData::from(
+                Into::<[u8; 32]>::into(qualifying_data.finalize()),
+            );
 
             // appraise the platform attestation & qualifying data
             appraise_platform_attestation(

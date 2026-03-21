@@ -73,10 +73,10 @@ fn main() -> Result<()> {
     );
 
     debug!("reading VmInstanceRotMock config from file");
-    let instance_cfg =
-        fs::read_to_string(&args.vm_instance_cfg).context("read ATTEST_INSTANCE_CFG to string")?;
-    let instance_cfg: VmInstanceConf =
-        serde_json::from_str(&instance_cfg).context("parse JSON from mock cfg for instance RoT")?;
+    let instance_cfg = fs::read_to_string(&args.vm_instance_cfg)
+        .context("read ATTEST_INSTANCE_CFG to string")?;
+    let instance_cfg: VmInstanceConf = serde_json::from_str(&instance_cfg)
+        .context("parse JSON from mock cfg for instance RoT")?;
 
     debug!("creating instance of VmInstanceAttestMock");
     // instantiate an `AttestMock` w/ the Oxide platform RoT instance requested
@@ -90,7 +90,8 @@ fn main() -> Result<()> {
             }
             debug!("binding to sock file: {}", sock.display());
 
-            let listener = UnixListener::bind(&sock).context("failed to bind to socket")?;
+            let listener = UnixListener::bind(&sock)
+                .context("failed to bind to socket")?;
             debug!("listening on socket file: {}", sock.display());
 
             Ok(VmInstanceRotSocketServer::new(rot, listener).run()?)

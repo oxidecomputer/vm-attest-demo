@@ -14,8 +14,8 @@ use std::{
 };
 
 use vm_attest::{
-    QualifyingData, Request, Response, VmInstanceAttestation, VmInstanceAttester, VmInstanceRot,
-    VmInstanceRotError,
+    QualifyingData, Request, Response, VmInstanceAttestation,
+    VmInstanceAttester, VmInstanceRot, VmInstanceRotError,
 };
 
 /// the maximum length of a message that we'll accept from clients
@@ -140,16 +140,21 @@ impl VmInstanceRotSocketServer {
                         "Error: Line length exceeded the limit of {} bytes.",
                         MAX_LINE_LENGTH
                     );
-                    let response = Response::Error("Request too long".to_string());
+                    let response =
+                        Response::Error("Request too long".to_string());
                     let mut response = serde_json::to_string(&response)?;
                     response.push('\n');
                     debug!("sending error response: {response}");
-                    reader.get_mut().get_mut().write_all(response.as_bytes())?;
+                    reader
+                        .get_mut()
+                        .get_mut()
+                        .write_all(response.as_bytes())?;
                     break;
                 }
 
                 debug!("string received: {msg}");
-                let result: Result<Request, serde_json::Error> = serde_json::from_str(&msg);
+                let result: Result<Request, serde_json::Error> =
+                    serde_json::from_str(&msg);
                 let request = match result {
                     Ok(q) => q,
                     Err(e) => {
@@ -157,7 +162,10 @@ impl VmInstanceRotSocketServer {
                         let mut response = serde_json::to_string(&response)?;
                         response.push('\n');
                         debug!("sending error response: {response}");
-                        reader.get_mut().get_mut().write_all(response.as_bytes())?;
+                        reader
+                            .get_mut()
+                            .get_mut()
+                            .write_all(response.as_bytes())?;
                         return Err(VmInstanceRotSocketRunError::Request(e));
                     }
                 };
@@ -252,25 +260,34 @@ impl<T: VmInstanceAttester> VmInstanceTcpServer<T> {
                         "Error: Line length exceeded the limit of {} bytes.",
                         MAX_LINE_LENGTH
                     );
-                    let response =
-                        VmInstanceAttestDataResponse::Error("Request too long".to_string());
+                    let response = VmInstanceAttestDataResponse::Error(
+                        "Request too long".to_string(),
+                    );
                     let mut response = serde_json::to_string(&response)?;
                     response.push('\n');
                     debug!("sending error response: {response}");
-                    reader.get_mut().get_mut().write_all(response.as_bytes())?;
+                    reader
+                        .get_mut()
+                        .get_mut()
+                        .write_all(response.as_bytes())?;
                     break;
                 }
 
                 debug!("qualifying data received: {msg}");
-                let result: Result<QualifyingData, serde_json::Error> = serde_json::from_str(&msg);
+                let result: Result<QualifyingData, serde_json::Error> =
+                    serde_json::from_str(&msg);
                 let qdata_in = match result {
                     Ok(q) => q,
                     Err(e) => {
-                        let response = VmInstanceAttestDataResponse::Error(e.to_string());
+                        let response =
+                            VmInstanceAttestDataResponse::Error(e.to_string());
                         let mut response = serde_json::to_string(&response)?;
                         response.push('\n');
                         debug!("sending error response: {response}");
-                        reader.get_mut().get_mut().write_all(response.as_bytes())?;
+                        reader
+                            .get_mut()
+                            .get_mut()
+                            .write_all(response.as_bytes())?;
                         return Err(VmInstanceTcpServerError::Request(e));
                     }
                 };
@@ -285,25 +302,35 @@ impl<T: VmInstanceAttester> VmInstanceTcpServer<T> {
                 let mut qdata_out = Sha256::new();
                 qdata_out.update(qdata_in);
                 qdata_out.update(&data);
-                let qdata_out = QualifyingData::from(Into::<[u8; 32]>::into(qdata_out.finalize()));
+                let qdata_out = QualifyingData::from(Into::<[u8; 32]>::into(
+                    qdata_out.finalize(),
+                ));
 
                 // get `attestation` from `VmInstanceRot` by passing the
                 // qualifying data generated above
-                let attestation = match self.vm_instance_rot.attest(&qdata_out) {
+                let attestation = match self.vm_instance_rot.attest(&qdata_out)
+                {
                     Ok(a) => a,
                     Err(e) => {
-                        let response = VmInstanceAttestDataResponse::Error(e.to_string());
+                        let response =
+                            VmInstanceAttestDataResponse::Error(e.to_string());
                         let mut response = serde_json::to_string(&response)?;
                         response.push('\n');
                         debug!("sending error response: {response}");
-                        reader.get_mut().get_mut().write_all(response.as_bytes())?;
-                        return Err(VmInstanceTcpServerError::VmInstanceRotError(e));
+                        reader
+                            .get_mut()
+                            .get_mut()
+                            .write_all(response.as_bytes())?;
+                        return Err(
+                            VmInstanceTcpServerError::VmInstanceRotError(e),
+                        );
                     }
                 };
 
                 let attested_data = AttestedData { attestation, data };
 
-                let response = VmInstanceAttestDataResponse::Attestation(attested_data);
+                let response =
+                    VmInstanceAttestDataResponse::Attestation(attested_data);
 
                 //   - return `attestation` + `public_key`
                 let mut response = serde_json::to_string(&response)?;
@@ -366,10 +393,13 @@ impl VmInstanceTcp {
         reader.read_line(&mut response)?;
         debug!("got attesetd key: {response}");
 
-        let response: VmInstanceAttestDataResponse = serde_json::from_str(&response)?;
+        let response: VmInstanceAttestDataResponse =
+            serde_json::from_str(&response)?;
         match response {
             VmInstanceAttestDataResponse::Attestation(a) => Ok(a),
-            VmInstanceAttestDataResponse::Error(e) => Err(VmInstanceTcpError::VmInstance(e)),
+            VmInstanceAttestDataResponse::Error(e) => {
+                Err(VmInstanceTcpError::VmInstance(e))
+            }
         }
     }
 }

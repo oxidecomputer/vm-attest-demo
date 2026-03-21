@@ -10,10 +10,8 @@ use log::debug;
 use std::{fs, os::unix::net::UnixListener, path::PathBuf};
 use vsock::{VsockAddr, VsockListener};
 
-use vm_attest::{
-    VmInstanceConf, VmInstanceRot, socket::VmInstanceRotSocketServer,
-    vsock::VmInstanceRotVsockServer,
-};
+use vm_attest::{VmInstanceConf, VmInstanceRot};
+use vm_attest_demo::{VmInstanceRotSocketServer, VmInstanceRotVsockServer};
 
 #[derive(Debug, Subcommand)]
 enum SocketType {

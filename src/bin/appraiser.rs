@@ -11,9 +11,8 @@ use sha2::{Digest, Sha256};
 use std::{fs, net::TcpStream, os::unix::net::UnixStream, path::PathBuf};
 use vm_attest::{
     QualifyingData, RotType, VmInstanceAttestation, VmInstanceAttester, VmInstanceConf,
-    socket::{VmInstanceRotSocketClient, VmInstanceTcp},
-    vsock::VmInstanceRotVsockClient,
 };
+use vm_attest_demo::{VmInstanceRotSocketClient, VmInstanceRotVsockClient, VmInstanceTcp};
 use vsock::{VMADDR_CID_HOST, VsockAddr, VsockStream};
 use x509_cert::{
     Certificate,

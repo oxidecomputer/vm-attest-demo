@@ -69,6 +69,9 @@ pki-playground --config test-data/config.kdl --out-dir "$ARTIFACTS" \
     generate-certificate-lists
 attest-mock test-data/log.kdl log > "$ARTIFACTS"/log.bin
 attest-mock test-data/corim.kdl corim > "$ARTIFACTS"/corim.cbor
+cp test-data/vm-instance-cfg.json "$ARTIFACTS"
+cp test-data/platform-id-staging.pem "$ARTIFACTS"
+cp test-data/*_corim.cbor "$ARTIFACTS"
 
 qemu-img create -f qcow2 "$QCOW_FILE" 2G
 

@@ -40,6 +40,39 @@
 
 set -euo pipefail
 
+usage () {
+    >&2 cat <<EOF
+Usage:
+$0 [-h|--help] [-c|--cache dir] instance.json
+EOF
+}
+
+# Loop through the parsed options
+read -ra OPTIONS <<< "$(getopt -o hc: --long help,cache: -n "$0" -- "$@")"
+eval set -- "${OPTIONS[*]}"
+while true; do
+    case "$1" in
+        -h|--help) usage; exit 0;;
+        -c|--cache) CACHE="$2"; shift 2;;
+        --) shift; break ;;
+        \?)
+            >&2 echo "Error: invalid option -$OPTARG"
+            exit 1
+            ;;
+        :)
+            >&2 echo "Error: $OPTARG requires an argument"
+            exit 1
+    esac
+done
+
+# setup variable holding strings to pass the `--cache-dir` to `debootstrap`
+# if set by the caller
+if [ -n "${CACHE:-}" ]; then
+    read -ra CACHE_DIR <<< "--cache-dir $(pwd)/$CACHE"
+else
+    declare -a CACHE_DIR
+fi
+
 # output disk image file names
 NAME="vm-attest-demo"
 QCOW_FILE="$NAME".qcow2
@@ -115,7 +148,10 @@ sudo cp "$ARTIFACTS"/* "$BOOTSTRAP_ROOT"/root
 tar --create --gzip --verbose --file attest-data.tar.gz --directory "$MOCK_DIR" ./attest-data
 rm -rf "$MOCK_DIR"
 
-sudo debootstrap --arch amd64 stable "$BOOTSTRAP_ROOT" http://ftp.us.debian.org/debian
+sudo debootstrap \
+    --arch amd64 \
+    "${CACHE_DIR[@]}" \
+    stable "$BOOTSTRAP_ROOT" http://ftp.us.debian.org/debian
 
 sudo mount -o bind,ro /dev "$BOOTSTRAP_ROOT"/dev
 sudo mount -t proc /proc "$BOOTSTRAP_ROOT"/proc

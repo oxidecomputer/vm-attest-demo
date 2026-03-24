@@ -72,7 +72,7 @@ fn main() -> Result<()> {
             .context("create OxAttestMock from artifacts")?,
     );
 
-    debug!("reading VmInstanceRotMock config from file");
+    debug!("reading VmInstanceConf from file");
     let instance_cfg = fs::read_to_string(&args.vm_instance_cfg)
         .context("read ATTEST_INSTANCE_CFG to string")?;
     let instance_cfg: VmInstanceConf = serde_json::from_str(&instance_cfg)
@@ -81,7 +81,7 @@ fn main() -> Result<()> {
     debug!("creating instance of VmInstanceAttestMock");
     // instantiate an `AttestMock` w/ the Oxide platform RoT instance requested
     // by the caller & the config
-    let rot = VmInstanceRot::new(oxide_platform_rot, instance_cfg);
+    let rot = VmInstanceRot::new(oxide_platform_rot);
 
     match args.socket_type {
         SocketType::Unix { sock } => {
@@ -94,7 +94,8 @@ fn main() -> Result<()> {
                 .context("failed to bind to socket")?;
             debug!("listening on socket file: {}", sock.display());
 
-            Ok(VmInstanceRotSocketServer::new(rot, listener).run()?)
+            Ok(VmInstanceRotSocketServer::new(rot, instance_cfg, listener)
+                .run()?)
         }
         SocketType::Vsock { cid, port } => {
             debug!("binding to vsock cid:port: ({cid}, {port})");
@@ -102,7 +103,8 @@ fn main() -> Result<()> {
                 .with_context(|| format!("bind to cid,pid: ({cid},{port})"))?;
             debug!("listening on cid,port: ({cid},{port})");
 
-            Ok(VmInstanceRotVsockServer::new(rot, listener).run()?)
+            Ok(VmInstanceRotVsockServer::new(rot, instance_cfg, listener)
+                .run()?)
         }
     }
 }

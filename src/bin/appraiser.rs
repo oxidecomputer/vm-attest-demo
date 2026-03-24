@@ -78,6 +78,10 @@ struct Args {
     #[command(flatten)]
     verbose: Verbosity<InfoLevel>,
 
+    /// Dump intermediate artifacts to this directory
+    #[clap(long)]
+    work_dir: Option<PathBuf>,
+
     /// The root certificate(s) used for verifying cert chains from the RoT
     #[clap(long)]
     root_cert: Option<PathBuf>,
@@ -266,6 +270,13 @@ fn main() -> Result<()> {
         Backend::VmInstanceRot { socket_type } => {
             let qualifying_data = QualifyingData::from_platform_rng()
                 .context("qualifying data from platform RNG")?;
+            if let Some(ref w) = args.work_dir {
+                let path = w.join("nonce.json");
+                let json = serde_json::to_string(&qualifying_data)
+                    .context("qualifying data to JSON")?;
+                fs::write(&path, json.as_bytes())
+                    .context("write qualifying data JSON to disk")?;
+            }
             match socket_type {
                 SocketType::Unix { sock } => {
                     let stream = UnixStream::connect(&sock)
@@ -294,6 +305,13 @@ fn main() -> Result<()> {
                     let vm_instance_rot = VmInstanceRotVsockClient::new(stream);
                     let attestation =
                         vm_instance_rot.attest(&qualifying_data)?;
+                    if let Some(ref w) = args.work_dir {
+                        let path = w.join("platform-attestation.json");
+                        let json = serde_json::to_string(&attestation)
+                            .context("qualifying data to JSON")?;
+                        fs::write(&path, json.as_bytes())
+                            .context("write qualifying data JSON to disk")?;
+                    }
                     appraise_platform_attestation(
                         &attestation,
                         &qualifying_data,

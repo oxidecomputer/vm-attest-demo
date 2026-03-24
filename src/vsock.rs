@@ -12,17 +12,29 @@ use vsock::{VsockListener, VsockStream};
 
 use vm_attest::{
     QualifyingData, Request, Response, VmInstanceAttestation,
-    VmInstanceAttester, VmInstanceRot, VmInstanceRotError,
+    VmInstanceAttester, VmInstanceConf, VmInstanceRot, VmInstanceRotError,
 };
 
-/// the maximum length of a message that we'll accept from clients
-const MAX_LINE_LENGTH: usize = 1024;
+use crate::MAX_LINE_LENGTH;
 
-/// This type is an implementation of a `VmInstanceRot` that listens for
-/// connections on a vsock. It receives JSON messages that encode the sole
-/// parameter to the `VmInstanceRot::attest` function.
+/// This type mocks the JSON interface exposed by the VmInstanceRot over a
+/// VsockListener. It accepts the same JSON encoded
+/// messages exchanged between VM instances and the VM instance RoT /
+/// `propolis`. These messages are decoded and passed along to the
+/// `VmInstanceRot` held by the `VmInstanceRotVsockServer`. Clients connecting
+/// to an instance of this type over the unix socket may either implement the
+/// message serialization themselves, or use the `VmInstanceRotVsockClient`.
+///
+/// ```text
+/// + ------------------------------+           +--------+
+/// | VmInstanceRotVsockServer      |           |        |
+/// +---------------+               |   JSON    | Client |
+/// | VmInstanceRot | <--> listener | <-vsock-> |        |
+/// +---------------+---------------+           +--------+
+/// ```
 pub struct VmInstanceRotVsockServer {
     rot: VmInstanceRot,
+    conf: VmInstanceConf,
     listener: VsockListener,
 }
 
@@ -42,8 +54,16 @@ pub enum VmInstanceRotVsockError {
 }
 
 impl VmInstanceRotVsockServer {
-    pub fn new(rot: VmInstanceRot, listener: VsockListener) -> Self {
-        Self { rot, listener }
+    pub fn new(
+        rot: VmInstanceRot,
+        conf: VmInstanceConf,
+        listener: VsockListener,
+    ) -> Self {
+        Self {
+            rot,
+            conf,
+            listener,
+        }
     }
 
     // message handling loop
@@ -108,7 +128,7 @@ impl VmInstanceRotVsockServer {
                         debug!("qualifying data received: {q:?}");
                         // NOTE: We do not contribute to the `QualifyingData`
                         // here. The self.rot impl will handle this for us.
-                        match self.rot.attest(&q) {
+                        match self.rot.attest(&self.conf, &q) {
                             Ok(a) => Response::Attest(a),
                             Err(e) => Response::Error(e.to_string()),
                         }

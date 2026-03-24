@@ -103,7 +103,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 [[package]]
 name = "attest-data"
 version = "0.5.0"
-source = "git+https://github.com/oxidecomputer/dice-util#ff9f27aa0d6ef6fb64c349890b6e3c242ea3d8fc"
+source = "git+https://github.com/oxidecomputer/dice-util#985ca75560349c7af74f328d842937e1d50b5d96"
 dependencies = [
  "const-oid",
  "der",
@@ -430,7 +430,7 @@ dependencies = [
 [[package]]
 name = "dice-verifier"
 version = "0.3.0-pre0"
-source = "git+https://github.com/oxidecomputer/dice-util#ff9f27aa0d6ef6fb64c349890b6e3c242ea3d8fc"
+source = "git+https://github.com/oxidecomputer/dice-util#985ca75560349c7af74f328d842937e1d50b5d96"
 dependencies = [
  "attest-data",
  "const-oid",
@@ -1503,7 +1503,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 [[package]]
 name = "vm-attest"
 version = "0.1.0"
-source = "git+https://github.com/oxidecomputer/vm-attest?rev=f2184012395b329b09395d1a63a1961a267d1166#f2184012395b329b09395d1a63a1961a267d1166"
+source = "git+https://github.com/oxidecomputer/vm-attest#a8e8df277efe6484a792b73c1c458629f45d14ff"
 dependencies = [
  "anyhow",
  "attest-data",

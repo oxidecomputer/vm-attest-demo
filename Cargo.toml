@@ -2,6 +2,7 @@
 name = "vm-attest-demo"
 version = "0.1.0"
 edition = "2024"
+build = "build/main.rs"
 
 [dependencies]
 anyhow = "1.0.102"
@@ -21,3 +22,6 @@ thiserror = "2.0.18"
 vm-attest.git = "https://github.com/oxidecomputer/vm-attest"
 vsock = "0.5.3"
 x509-cert = "0.2.5"
+
+[build-dependencies]
+anyhow = "1.0.102"

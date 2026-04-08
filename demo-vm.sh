@@ -171,27 +171,6 @@ EOF
 [[ -d /boot/efi ]] || mkdir /boot/efi
 mount -a
 
-# cloud-init will find the network interface from metadata but we must source
-# the files from 'interfaces.d' to get debian to put them into effect
-cat <<EOF > /etc/network/interfaces
-source /etc/network/interfaces.d/*
-
-auto lo
-iface lo inet loopback
-EOF
-
-echo "vm-instance" > /etc/hostname
-
-cat <<EOF > /etc/hosts
-127.0.0.1       localhost
-127.0.1.1       vm-instance
-
-# The following lines are desirable for IPv6 capable hosts
-::1     localhost ip6-localhost ip6-loopback
-ff02::1 ip6-allnodes
-ff02::2 ip6-allrouters
-EOF
-
 debconf-set-selections <<EOF
 tzdata tzdata/Areas select America
 tzdata tzdata/Zones/America select Los_Angeles
@@ -211,7 +190,13 @@ EOF
 
 # Stop anything overriding debconf's settings
 rm -f /etc/default/locale /etc/locale.gen /etc/default/keyboard
-DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes locales linux-image-amd64 grub-efi-amd64 overlayroot cloud-init
+DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes locales linux-image-amd64 grub-efi-amd64 overlayroot cloud-init openssh-server
+DEBIAN_FRONTEND=noninteractive apt-get remove --assume-yes ifupdown
+
+# ifupdown & cloud-init don't play well together in debian 13
+# cloud-init generates an 'inet6' line for ipv6 dhcp and dhclient doesn't like these
+# https://lists.debian.org/debian-devel/2025/10/msg00201.html
+systemctl enable systemd-networkd
 
 # Add console=ttyS0 so we get early boot messages on the serial console.
 sed -i -e 's/^\\(GRUB_CMDLINE_LINUX="[^"]*\\)"$/\\1 console=ttyS0"/' /etc/default/grub
